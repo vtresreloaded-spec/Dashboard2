@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>NASDAQ CFD PRO · CODEPEN EDITION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* RESET Y VARIABLES */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #14141f;
+            --bg-card: #1c1c28;
+            --accent-primary: #00d4ff;
+            --accent-secondary: #7b2eda;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --success: #00ff95;
+            --warning: #ffd700;
+            --danger: #ff4444;
+            --border: rgba(255, 255, 255, 0.05);
+            --glow: rgba(0, 212, 255, 0.3);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            padding: 10px;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+        
+        /* Cursor Glow */
+        .cursor-glow {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease;
+        }
+        
+        /* Layout Principal */
+        .container {
+            display: flex;
+            gap: 15px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: fit-content;
+            position: sticky;
+            top: 10px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px;
+        }
+        
+        .logo-icon {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-main {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo-sub {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Perfil */
+        .profile-card {
+            background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .profile-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .avatar-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: var(--success);
+            border: 2px solid var(--bg-card);
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .profile-level {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        .profile-edit {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--border);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Navegación */
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+        
+        .nav-item.active {
+            background: rgba(0,212,255,0.1);
+            color: var(--accent-primary);
+            border-left: 3px solid var(--accent-primary);
+        }
+        
+        /* Capital Card */
+        .capital-card {
+            background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid var(--border);
+        }
+        
+        .capital-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .capital-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .capital-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--border);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .capital-btn:hover {
+            background: var(--accent-primary);
+        }
+        
+        .capital-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .capital-progress {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 2px;
+            width: 0%;
+        }
+        
+        .capital-stats {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat span:first-child {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+        }
+        
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+        
+        /* Reloj Dual */
+        .dual-clock {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .clock-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .clock-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        
+        .clock-time {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+        
+        .countdown {
+            text-align: center;
+            margin-top: 8px;
+            padding: 6px;
+            background: rgba(0,212,255,0.1);
+            border-radius: 6px;
+            color: var(--warning);
+            font-size: 0.8rem;
+        }
+        
+        /* Market Status */
+        .market-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-indicator.live { background: var(--success); }
+        
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #fff, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .date-badge {
+            padding: 5px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50px;
+            font-size: 0.8rem;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .time-display {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .time-ny {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-icon:hover {
+            background: var(--accent-primary);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Sections */
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-header h3 {
+            font-size: 1.1rem;
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50px;
+            font-size: 0.7rem;
+        }
+        
+        .live-badge {
+            background: rgba(255,68,68,0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+        }
+        
+        /* Magnificent 7 */
+        .mag7-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .mag7-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+        }
+        
+        .mag7-symbol {
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        
+        .mag7-name {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        .mag7-price {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        /* Noticias */
+        .news-ticker {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .news-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .news-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        .news-interpretation {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            padding: 5px;
+            border-radius: 5px;
+            background: rgba(0,0,0,0.3);
+        }
+        
+        .interpretation-bullish { color: var(--success); }
+        .interpretation-bearish { color: var(--danger); }
+        .interpretation-neutral { color: var(--warning); }
+        
+        /* Secondary Grid */
+        .secondary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* Zones */
+        .zones-table {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .zone-row {
+            display: grid;
+            grid-template-columns: 80px 90px 1fr;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .zone-status {
+            padding: 2px 8px;
+            border-radius: 50px;
+            text-align: center;
+        }
+        
+        .status-green {
+            background: rgba(0,255,149,0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .status-yellow {
+            background: rgba(255,215,0,0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+        
+        .status-red {
+            background: rgba(255,68,68,0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .current-zone-alert {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        /* Weekly Grid */
+        .weekly-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        
+        .day-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .day-name {
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-size: 0.9rem;
+        }
+        
+        .day-status {
+            font-size: 0.7rem;
+            padding: 2px 4px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        /* Calendar */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            padding: 8px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .calendar-day.today {
+            border-color: var(--accent-primary);
+        }
+        
+        .calendar-day-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        
+        /* Settings */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .setting-item {
+            margin-bottom: 15px;
+        }
+        
+        .setting-item label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .setting-item input,
+        .setting-item select {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: #fff;
+        }
+        
+        .settings-btn {
+            padding: 8px 16px;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid var(--accent-primary);
+            border-radius: 6px;
+            color: var(--accent-primary);
+            cursor: pointer;
+            margin-right: 8px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-primary);
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 350px;
+        }
+        
+        .avatar-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+        
+        .avatar-option {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+        
+        .avatar-option.selected {
+            border-color: var(--accent-primary);
+            background: rgba(0,212,255,0.1);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; position: static; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .main-grid,
+            .secondary-grid,
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor-glow"></div>
+    
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">📈</div>
+                <div class="logo-text">
+                    <span class="logo-main">NASDAQ</span>
+                    <span class="logo-sub">CFD PRO</span>
+                </div>
+            </div>
+            
+            <!-- Perfil -->
+            <div class="profile-card">
+                <div class="profile-avatar" id="avatarBtn">
+                    <span id="avatarDisplay">👤</span>
+                    <div class="avatar-status"></div>
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">Trader Alpha</div>
+                    <div class="profile-level">Nivel 7 · 1,240 XP</div>
+                </div>
+                <button class="profile-edit" id="editProfileBtn">✎</button>
+            </div>
+            
+            <!-- Navegación -->
+            <nav class="nav-menu">
+                <div class="nav-item active" data-section="dashboard">📈 Dashboard</div>
+                <div class="nav-item" data-section="calendar">📅 Calendario</div>
+                <div class="nav-item" data-section="analytics">📊 Analytics</div>
+                <div class="nav-item" data-section="settings">⚙️ Settings</div>
+            </nav>
+            
+            <!-- Capital -->
+            <div class="capital-card">
+                <div class="capital-label">
+                    Capital Simulado
+                    <span class="capital-actions">
+                        <button class="capital-btn" id="addCapital">+</button>
+                        <button class="capital-btn" id="removeCapital">-</button>
+                    </span>
+                </div>
+                <div class="capital-value" id="capitalValue">$10,000</div>
+                <div class="capital-progress">
+                    <div class="progress-bar" id="capitalProgress"></div>
+                </div>
+                <div class="capital-stats">
+                    <div class="stat"><span>Hoy</span> <span id="dailyReturn" class="positive">+1.2%</span></div>
+                    <div class="stat"><span>Semana</span> <span id="weeklyReturn" class="positive">+3.8%</span></div>
+                </div>
+            </div>
+            
+            <!-- Reloj Dual -->
+            <div class="dual-clock">
+                <div class="clock-item">
+                    <span class="clock-label">🇵🇱 Polonia</span>
+                    <span class="clock-time" id="polandTime">--:--:--</span>
+                </div>
+                <div class="clock-item">
+                    <span class="clock-label">🗽 Nueva York</span>
+                    <span class="clock-time" id="nyTime">--:--:--</span>
+                </div>
+                <div class="countdown" id="marketCountdown">Apertura en: 00:00:00</div>
+            </div>
+            
+            <!-- Market Status -->
+            <div class="market-status">
+                <div class="status-indicator live" id="marketIndicator"></div>
+                <div>
+                    <div class="status-label">Mercado</div>
+                    <div class="status-value" id="marketStatus">Cargando...</div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h1 class="page-title" id="pageTitle">Trading Dashboard</h1>
+                    <div class="date-badge" id="currentDate"></div>
+                </div>
+                <div class="header-right">
+                    <div class="time-display">
+                        <span class="time-ny" id="currentTime">--:--</span>
+                        <span class="time-label">NY Time</span>
+                    </div>
+                    <button class="btn-icon" id="refreshBtn">🔄</button>
+                    <button class="btn-icon" id="notificationsBtn">🔔</button>
+                    <div class="user-avatar" id="headerAvatar">👤</div>
+                </div>
+            </header>
+            
+            <!-- DASHBOARD SECTION -->
+            <section id="dashboard" class="section active">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🕐</div>
+                        <div class="stat-content">
+                            <div class="stat-title">Sesión Actual</div>
+                            <div class="stat-value" id="currentSession">--</div>
+                            <div class="stat-trend" id="sessionStatus">--</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-content">
+                            <div class="stat-title">Volatilidad</div>
+                            <div class="stat-value" id="volatilityValue">--</div>
+                            <div class="stat-trend" id="volatilityDetails">--</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <div class="stat-title">Setup</div>
+                            <div class="stat-value" id="setupType">Breakout</div>
+                            <div class="stat-trend">80% prob.</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-title">Trades Hoy</div>
+                            <div class="stat-value" id="tradesCount">0/3</div>
+                            <div class="stat-trend">Máx. diario</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Grid -->
+                <div class="main-grid">
+                    <!-- Magnificent 7 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚡ Magnificent 7</h3>
+                            <span class="live-badge">LIVE</span>
+                        </div>
+                        <div class="mag7-grid" id="mag7Container"></div>
+                    </div>
+                    
+                    <!-- Noticias con Interpretación -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📰 Noticias de Impacto</h3>
+                            <button class="btn-icon" id="refreshNews" style="width:30px;height:30px;">↻</button>
+                        </div>
+                        <div class="news-ticker" id="newsContainer"></div>
+                    </div>
+                </div>
+                
+                <!-- Secondary Grid -->
+                <div class="secondary-grid">
+                    <!-- Zonas de Trading -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🎯 Zonas de Trading</h3>
+                            <div style="display:flex;gap:8px;font-size:0.7rem;">
+                                <span><span style="color:var(--success);">🟢</span> Operar</span>
+                                <span><span style="color:var(--warning);">🟡</span> Precaución</span>
+                                <span><span style="color:var(--danger);">🔴</span> No operar</span>
+                            </div>
+                        </div>
+                        <div class="zones-table" id="zonesTable"></div>
+                        <div class="current-zone-alert" id="zoneAlert">Cargando...</div>
+                    </div>
+                    
+                    <!-- Calendario Semanal -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📅 Calendario Semanal</h3>
+                            <span class="badge" id="weekOfYear">Semana 12</span>
+                        </div>
+                        <div class="weekly-grid" id="weeklyGrid"></div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- CALENDAR SECTION -->
+            <section id="calendar" class="section">
+                <div class="card">
+                    <div class="calendar-header" style="display:flex;justify-content:space-between;margin-bottom:20px;">
+                        <h2>Calendario de Trading</h2>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn-icon" id="prevMonth">←</button>
+                            <span class="current-month" id="currentMonthYear">Marzo 2026</span>
+                            <button class="btn-icon" id="nextMonth">→</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </section>
+            
+            <!-- ANALYTICS SECTION -->
+            <section id="analytics" class="section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <div class="stat-title">Win Rate</div>
+                            <div class="stat-value" id="winRate">68%</div>
+                            <div class="stat-trend positive">+5%</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-title">Profit Factor</div>
+                            <div class="stat-value" id="profitFactor">2.4</div>
+                            <div class="stat-trend">Excelente</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <canvas id="analyticsChart" style="height:300px;"></canvas>
+                </div>
+            </section>
+            
+            <!-- SETTINGS SECTION -->
+            <section id="settings" class="section">
+                <div class="settings-grid">
+                    <div class="card">
+                        <h3 style="margin-bottom:15px;">⚙️ Configuración</h3>
+                        <div class="setting-item">
+                            <label>Capital Inicial</label>
+                            <input type="number" id="initialCapital" value="10000">
+                        </div>
+                        <div class="setting-item">
+                            <label>Apalancamiento</label>
+                            <select id="maxLeverage">
+                                <option value="10">x10</option>
+                                <option value="20" selected>x20</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Operaciones/Día</label>
+                            <input type="number" id="maxTrades" value="3">
+                        </div>
+                        <button class="settings-btn" id="saveSettings">Guardar</button>
+                        <button class="settings-btn" id="resetSettings">Resetear</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- MODAL PERFIL -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <h3>Editar Perfil</h3>
+            <input type="text" id="profileNameInput" placeholder="Nombre" value="Trader Alpha">
+            <div class="avatar-selector">
+                <span class="avatar-option selected" data-avatar="👤">👤</span>
+                <span class="avatar-option" data-avatar="🦅">🦅</span>
+                <span class="avatar-option" data-avatar="🐺">🐺</span>
+                <span class="avatar-option" data-avatar="🦈">🦈</span>
+                <span class="avatar-option" data-avatar="🐂">🐂</span>
+                <span class="avatar-option" data-avatar="🐻">🐻</span>
+            </div>
+            <button id="saveProfileBtn">Guardar</button>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // NASDAQ CFD PRO - VERSIÓN CODEPEN
+        // TOTALMENTE FUNCIONAL
+        // ============================================
+        
+        // Datos de Trading
+        const tradingData = {
+            zones: [
+                { time: '00:00-07:00', status: 'red', label: '🔴 NO OPERAR', desc: 'Sesión asiática' },
+                { time: '07:00-09:30', status: 'yellow', label: '🟡 OBSERVAR', desc: 'Pre-market' },
+                { time: '09:30-10:30', status: 'green', label: '🟢 VENTANA PRINCIPAL', desc: 'Apertura Wall Street' },
+                { time: '10:30-12:00', status: 'green', label: '🟢 CONTINUACIÓN', desc: 'Trades direccionales' },
+                { time: '12:00-13:30', status: 'red', label: '🔴 DEAD ZONE', desc: 'No operar' },
+                { time: '13:30-15:00', status: 'green', label: '🟢 ÚLTIMA VENTANA', desc: 'Liquidez vuelve' },
+                { time: '15:30-16:00', status: 'yellow', label: '🟡 CIERRE', desc: 'Alta volatilidad' }
+            ],
+            
+            weekly: [
+                { day: 'LUN', desc: 'Define tendencia', status: 'yellow' },
+                { day: 'MAR', desc: 'Continuidad fuerte', status: 'green' },
+                { day: 'MIÉ', desc: 'Volatilidad macro', status: 'yellow' },
+                { day: 'JUE', desc: 'Excelente trading', status: 'green' },
+                { day: 'VIE', desc: 'Errátil', status: 'red' }
+            ],
+            
+            magnificent7: [
+                { symbol: 'AAPL', name: 'Apple', price: 175.34, change: 1.2 },
+                { symbol: 'MSFT', name: 'Microsoft', price: 420.45, change: 0.8 },
+                { symbol: 'GOOGL', name: 'Google', price: 142.67, change: -0.3 },
+                { symbol: 'AMZN', name: 'Amazon', price: 178.90, change: 1.5 },
+                { symbol: 'NVDA', name: 'NVIDIA', price: 950.23, change: 2.1 },
+                { symbol: 'META', name: 'Meta', price: 485.50, change: 0.5 },
+                { symbol: 'TSLA', name: 'Tesla', price: 175.80, change: -1.2 }
+            ],
+            
+            news: [
+                { time: '09:45', title: 'Powell: "Tasas se mantendrán altas"', impact: 'high', interpretation: 'bearish', reason: 'Política monetaria restrictiva' },
+                { time: '10:30', title: 'NVIDIA anuncia split 10x1', impact: 'high', interpretation: 'bullish', reason: 'Mayor accesibilidad para inversores' },
+                { time: '11:15', title: 'IPC subyacente: +0.4% vs +0.3% esperado', impact: 'high', interpretation: 'bearish', reason: 'Presión inflacionaria' },
+                { time: '13:00', title: 'Tesla: Entregas superan estimados', impact: 'medium', interpretation: 'bullish', reason: 'Fuerte demanda' },
+                { time: '14:30', title: 'Apple: iPhone 16 ventas sólidas', impact: 'medium', interpretation: 'bullish', reason: 'Crecimiento en China' },
+                { time: '15:45', title: 'Amazon: AWS crece 18%', impact: 'medium', interpretation: 'bullish', reason: 'Margen superior' }
+            ]
+        };
+        
+        // Estado de la app
+        let appState = {
+            capital: 10000,
+            profile: { name: 'Trader Alpha', avatar: '👤' }
+        };
+        
+        // ============================================
+        // FUNCIONES DE INICIALIZACIÓN
+        // ============================================
+        
+        function init() {
+            loadProfile();
+            populateZones();
+            populateWeekly();
+            populateMag7();
+            populateNews();
+            initAnalyticsChart();
+            generateCalendar();
+            initEventListeners();
+            
+            // Timers en tiempo real
+            updateTime();
+            setInterval(updateTime, 1000);
+            setInterval(updateMarketData, 3000);
+            setInterval(updateNews, 15000);
+        }
+        
+        // ============================================
+        // PERFIL
+        // ============================================
+        
+        function loadProfile() {
+            const saved = localStorage.getItem('nasdaqProfile');
+            if (saved) {
+                appState.profile = JSON.parse(saved);
+            }
+            document.getElementById('profileName').textContent = appState.profile.name;
+            document.getElementById('avatarDisplay').textContent = appState.profile.avatar;
+            document.getElementById('headerAvatar').textContent = appState.profile.avatar;
+        }
+        
+        document.getElementById('editProfileBtn').addEventListener('click', () => {
+            document.getElementById('profileModal').classList.add('show');
+            document.getElementById('profileNameInput').value = appState.profile.name;
+        });
+        
+        document.getElementById('saveProfileBtn').addEventListener('click', () => {
+            appState.profile.name = document.getElementById('profileNameInput').value;
+            const selected = document.querySelector('.avatar-option.selected');
+            if (selected) appState.profile.avatar = selected.dataset.avatar;
+            localStorage.setItem('nasdaqProfile', JSON.stringify(appState.profile));
+            loadProfile();
+            document.getElementById('profileModal').classList.remove('show');
+        });
+        
+        document.querySelectorAll('.avatar-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+            });
+        });
+        
+        document.getElementById('profileModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('profileModal')) {
+                e.target.classList.remove('show');
+            }
+        });
+        
+        // ============================================
+        // CAPITAL
+        // ============================================
+        
+        document.getElementById('addCapital').addEventListener('click', () => {
+            appState.capital += 1000;
+            updateCapital();
+        });
+        
+        document.getElementById('removeCapital').addEventListener('click', () => {
+            if (appState.capital >= 1000) {
+                appState.capital -= 1000;
+                updateCapital();
+            }
+        });
+        
+        function updateCapital() {
+            document.getElementById('capitalValue').textContent = '$' + appState.capital.toLocaleString();
+            const progress = ((appState.capital - 10000) / 10000) * 50;
+            document.getElementById('capitalProgress').style.width = Math.min(progress, 100) + '%';
+        }
+        
+        // ============================================
+        // RELOJ EN TIEMPO REAL
+        // ============================================
+        
+        function updateTime() {
+            const now = new Date();
+            
+            // Polonia (UTC+1/UTC+2)
+            const polandTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
+            document.getElementById('polandTime').textContent = 
+                polandTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            
+            // Nueva York (UTC-4/UTC-5)
+            const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            const nyTimeStr = nyTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            document.getElementById('nyTime').textContent = nyTimeStr;
+            document.getElementById('currentTime').textContent = nyTimeStr.substring(0,5);
+            
+            // Fecha
+            document.getElementById('currentDate').textContent = 
+                nyTime.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // Cuenta regresiva a apertura (09:30 NY)
+            const target = new Date(nyTime);
+            target.setHours(9, 30, 0, 0);
+            if (nyTime > target) target.setDate(target.getDate() + 1);
+            
+            const diff = target - nyTime;
+            const hours = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('marketCountdown').textContent = 
+                `Apertura en: ${hours.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+            
+            updateMarketStatus(nyTime);
+        }
+        
+        function updateMarketStatus(nyTime) {
+            const hour = nyTime.getHours() + nyTime.getMinutes() / 60;
+            let status, session, volatility, zoneAlert;
+            
+            if (hour < 7) { status = 'Sesión asiática'; session = '🔴 Cerrado'; volatility = 'Baja'; zoneAlert = '🔴 No operar - Sesión asiática'; }
+            else if (hour < 9.5) { status = 'Pre-market'; session = '🟡 Observación'; volatility = 'Media'; zoneAlert = '🟡 Pre-market - Observar niveles'; }
+            else if (hour < 10.5) { status = 'Apertura'; session = '🟢 VENTANA PRINCIPAL'; volatility = 'Alta'; zoneAlert = '⚡ APERTURA - Mayor volatilidad'; }
+            else if (hour < 12) { status = 'Continuación'; session = '🟢 Trading activo'; volatility = 'Alta'; zoneAlert = '📈 Continuación - Buscar confirmación'; }
+            else if (hour < 13.5) { status = 'Dead Zone'; session = '🔴 NO OPERAR'; volatility = 'Baja'; zoneAlert = '💤 Dead zone - No operar'; }
+            else if (hour < 15) { status = 'Última ventana'; session = '🟢 Oportunidad'; volatility = 'Alta'; zoneAlert = '🎯 Última ventana - Oportunidad'; }
+            else if (hour < 16) { status = 'Cierre'; session = '🟡 Alta volatilidad'; volatility = 'Muy Alta'; zoneAlert = '⚠️ Cierre - Precaución'; }
+            else { status = 'Cerrado'; session = '🔴 Cerrado'; volatility = 'N/A'; zoneAlert = '🔒 Mercado cerrado'; }
+            
+            document.getElementById('marketStatus').textContent = status;
+            document.getElementById('currentSession').textContent = session;
+            document.getElementById('volatilityValue').textContent = volatility;
+            document.getElementById('zoneAlert').textContent = zoneAlert;
+            
+            const indicator = document.getElementById('marketIndicator');
+            if (session.includes('🟢')) indicator.style.background = 'var(--success)';
+            else if (session.includes('🟡')) indicator.style.background = 'var(--warning)';
+            else indicator.style.background = 'var(--danger)';
+        }
+        
+        // ============================================
+        // MAGNIFICENT 7
+        // ============================================
+        
+        function populateMag7() {
+            const container = document.getElementById('mag7Container');
+            container.innerHTML = tradingData.magnificent7.map(s => `
+                <div class="mag7-item">
+                    <span class="mag7-symbol">${s.symbol}</span>
+                    <span class="mag7-name">${s.name}</span>
+                    <span class="mag7-price">$${s.price.toFixed(2)}</span>
+                    <span class="${s.change >= 0 ? 'positive' : 'negative'}">
+                        ${s.change >= 0 ? '+' : ''}${s.change}%
+                    </span>
+                </div>
+            `).join('');
+        }
+        
+        function updateMarketData() {
+            tradingData.magnificent7 = tradingData.magnificent7.map(s => ({
+                ...s,
+                price: s.price * (1 + (Math.random() - 0.5) * 0.01),
+                change: (Math.random() * 4 - 2).toFixed(1)
+            }));
+            populateMag7();
+            document.getElementById('tradesCount').textContent = Math.floor(Math.random() * 4) + '/3';
+        }
+        
+        // ============================================
+        // NOTICIAS CON INTERPRETACIÓN
+        // ============================================
+        
+        function populateNews() {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = tradingData.news.map(n => {
+                const icon = n.interpretation === 'bullish' ? '🚀' : n.interpretation === 'bearish' ? '📉' : '⚖️';
+                const color = n.interpretation === 'bullish' ? 'var(--success)' : n.interpretation === 'bearish' ? 'var(--danger)' : 'var(--warning)';
+                return `
+                    <div class="news-item">
+                        <div class="news-time">${n.time}</div>
+                        <div style="font-weight:500;">${n.title}</div>
+                        <div class="news-interpretation" style="color:${color}">
+                            ${icon} ${n.interpretation === 'bullish' ? 'MERCADO ALCISTA' : n.interpretation === 'bearish' ? 'MERCADO BAJISTA' : 'NEUTRAL'} 
+                            <span style="color:var(--text-secondary);">· ${n.reason}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function updateNews() {
+            if (Math.random() > 0.6) {
+                const interpretations = ['bullish', 'bearish', 'neutral'];
+                const headlines = [
+                    'NVIDIA supera estimados',
+                    'Apple anuncia recompras',
+                    'Tesla baja producción',
+                    'Inflación mayor a esperada',
+                    'FOMC mantiene tasas',
+                    'Microsoft sube dividendo'
+                ];
+                const reasons = {
+                    bullish: ['Fuerte demanda', 'Catalizador positivo', 'Crecimiento esperado'],
+                    bearish: ['Presión regulatoria', 'Debilidad sectorial', 'Riesgos macro'],
+                    neutral: ['En línea esperado', 'Sin novedades', 'Mercado consolida']
+                };
+                
+                const interpretation = interpretations[Math.floor(Math.random() * 3)];
+                tradingData.news.unshift({
+                    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                    title: headlines[Math.floor(Math.random() * headlines.length)],
+                    impact: interpretation === 'bullish' || interpretation === 'bearish' ? 'high' : 'medium',
+                    interpretation: interpretation,
+                    reason: reasons[interpretation][Math.floor(Math.random() * 3)]
+                });
+                tradingData.news = tradingData.news.slice(0, 8);
+                populateNews();
+            }
+        }
+        
+        // ============================================
+        // ZONAS Y SEMANAL
+        // ============================================
+        
+        function populateZones() {
+            document.getElementById('zonesTable').innerHTML = tradingData.zones.map(z => `
+                <div class="zone-row">
+                    <span>${z.time}</span>
+                    <span class="zone-status status-${z.status}">${z.label}</span>
+                    <span class="zone-desc">${z.desc}</span>
+                </div>
+            `).join('');
+        }
+        
+        function populateWeekly() {
+            document.getElementById('weeklyGrid').innerHTML = tradingData.weekly.map(w => `
+                <div class="day-card">
+                    <div class="day-name">${w.day}</div>
+                    <div class="day-desc">${w.desc}</div>
+                    <div class="day-status status-${w.status}">${w.status === 'green' ? '🟢' : w.status === 'yellow' ? '🟡' : '🔴'}</div>
+                </div>
+            `).join('');
+            document.getElementById('weekOfYear').textContent = 'Semana ' + new Date().getWeekNumber();
+        }
+        
+        Date.prototype.getWeekNumber = function() {
+            const d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        };
+        
+        // ============================================
+        // GRÁFICO ANALYTICS
+        // ============================================
+        
+        function initAnalyticsChart() {
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
+                    datasets: [{
+                        data: [2.1, 3.8, 1.5, 4.2, 2.8],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0,212,255,0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0b0' } },
+                        x: { ticks: { color: '#a0a0b0' } }
+                    }
+                }
+            });
+        }
+        
+        // ============================================
+        // CALENDARIO MENSUAL
+        // ============================================
+        
+        let currentCalDate = new Date();
+        
+        function generateCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            if (!grid) return;
+            
+            const year = currentCalDate.getFullYear();
+            const month = currentCalDate.getMonth();
+            document.getElementById('currentMonthYear').textContent = 
+                currentCalDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            let html = '';
+            ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(d => {
+                html += `<div class="calendar-day-header">${d}</div>`;
+            });
+            
+            for (let i = 0; i < firstDay.getDay(); i++) html += '<div class="calendar-day empty"></div>';
+            
+            const today = new Date();
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const date = new Date(year, month, d);
+                const isToday = date.toDateString() === today.toDateString();
+                const dayOfWeek = date.getDay();
+                let statusClass = '';
+                if (dayOfWeek === 1) statusClass = 'status-yellow';
+                else if (dayOfWeek === 2 || dayOfWeek === 4) statusClass = 'status-green';
+                else if (dayOfWeek === 3) statusClass = 'status-yellow';
+                else if (dayOfWeek === 5) statusClass = 'status-red';
+                
+                html += `
+                    <div class="calendar-day ${isToday ? 'today' : ''}">
+                        <div>${d}</div>
+                        <div class="calendar-day-indicator ${statusClass}"></div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+        
+        document.getElementById('prevMonth')?.addEventListener('click', () => {
+            currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+            generateCalendar();
+        });
+        
+        document.getElementById('nextMonth')?.addEventListener('click', () => {
+            currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+            generateCalendar();
+        });
+        
+        // ============================================
+        // NAVEGACIÓN
+        // ============================================
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                const section = item.dataset.section;
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(section).classList.add('active');
+                document.getElementById('pageTitle').textContent = 
+                    section.charAt(0).toUpperCase() + section.slice(1);
+            });
+        });
+        
+        // ============================================
+        // BOTONES
+        // ============================================
+        
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            location.reload();
+        });
+        
+        document.getElementById('refreshNews').addEventListener('click', () => {
+            updateNews();
+            populateNews();
+        });
+        
+        document.getElementById('notificationsBtn').addEventListener('click', () => {
+            alert('🔔 Notificaciones:\n• Apertura en 15 min\n• Niveles clave: 17,850\n• Noticia importante: Datos IPC');
+        });
+        
+        // ============================================
+        // SETTINGS
+        // ============================================
+        
+        document.getElementById('saveSettings').addEventListener('click', () => {
+            alert('Configuración guardada');
+        });
+        
+        document.getElementById('resetSettings').addEventListener('click', () => {
+            localStorage.clear();
+            location.reload();
+        });
+        
+        // ============================================
+        // CURSOR GLOW
+        // ============================================
+        
+        document.addEventListener('mousemove', (e) => {
+            document.querySelector('.cursor-glow').style.left = e.clientX + 'px';
+            document.querySelector('.cursor-glow').style.top = e.clientY + 'px';
+        });
+        
+        // ============================================
+        // INICIAR
+        // ============================================
+        
+        init();
+    </script>
+</body>
+</html>
